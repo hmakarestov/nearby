@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "198941235916",
+    "firebase_url": "https://andr2-cfdf2.firebaseio.com",
+    "project_id": "andr2-cfdf2",
+    "storage_bucket": "andr2-cfdf2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198941235916:android:019e18783d8bf2b8de0069",
+        "android_client_info": {
+          "package_name": "fhict.nl.nearby"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198941235916-he5l5scvdlp15gbjb5mp32i3pgpfk95l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fhict.nl.nearby",
+            "certificate_hash": "b163313442a94fd2797173baf919040ff67dea6d"
+          }
+        },
+        {
+          "client_id": "198941235916-vmkvjisasror32i746tpttapcss095g9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVC_C8DfXpSY2lKxbFvTyHnmeiVTb6Wuw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198941235916-vmkvjisasror32i746tpttapcss095g9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
