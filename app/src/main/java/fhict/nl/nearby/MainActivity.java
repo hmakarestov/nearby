@@ -54,6 +54,11 @@ public class MainActivity extends AppCompatActivity {
         TextView tv = findViewById(R.id.tvMainTest);
         tv.setText(mAuth.getCurrentUser().getEmail());
 
+
+        //you can get user details.
+        //mAuth.getCurrentUser().getEmail() -> email(changeable)
+        //mAuth.getCurrentUser().getUid() -> unique ID(static), maybe use this to save data in firebase
+
         //TODO actually launching  the other main activities from here
     }
 }
