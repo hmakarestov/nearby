@@ -1,13 +1,21 @@
 package fhict.nl.nearby;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GestureDetectorCompat;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.Window;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -15,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     final int LAUNCH_LOGIN_ACTIVITY = 0;
+    MapFragment mf = new MapFragment();
+    private GoogleMap gm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +61,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void LaunchActivities(){
         //demo showing login success
-        TextView tv = findViewById(R.id.tvMainTest);
-        tv.setText(mAuth.getCurrentUser().getEmail());
-
-
+        Intent i = new Intent(getBaseContext(), MenuActivity.class);
+        startActivity(i);
         //you can get user details.
         //mAuth.getCurrentUser().getEmail() -> email(changeable)
         //mAuth.getCurrentUser().getUid() -> unique ID(static), maybe use this to save data in firebase
