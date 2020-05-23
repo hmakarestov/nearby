@@ -53,7 +53,6 @@ public class MenuActivity extends AppCompatActivity implements OnMapReadyCallbac
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
-    NavigationView.OnNavigationItemSelectedListener
 
     @Override
     public boolean onSupportNavigateUp() {
