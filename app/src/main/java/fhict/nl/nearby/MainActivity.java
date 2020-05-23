@@ -51,8 +51,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void LaunchActivities(){
         //demo showing login success
-        TextView tv = findViewById(R.id.tvMainTest);
-        tv.setText(mAuth.getCurrentUser().getEmail());
+        Intent intent = new Intent(MainActivity.this, MenuActivity.class);
+        startActivity(intent);
 
 
         //you can get user details.
