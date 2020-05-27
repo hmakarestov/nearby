@@ -18,10 +18,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class MenuActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MenuActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
-    private GoogleMap gm;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,12 +30,6 @@ public class MenuActivity extends AppCompatActivity implements OnMapReadyCallbac
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //declaring map fragment
-        MapFragment mf = new MapFragment();
-        getFragmentManager().beginTransaction().add(R.id.frameLayout,mf).commit();
-        //must change frameLayout with sth else in order to be able to access the other pages
-        //frameLayout covers the nav_host_fragment, which displays the other pages
-        mf.getMapAsync(this);
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
@@ -64,9 +58,9 @@ public class MenuActivity extends AppCompatActivity implements OnMapReadyCallbac
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        gm=googleMap;
-        gm.addMarker(new MarkerOptions().position(new LatLng(51.44083,5.47778)));
-    }
+//    @Override
+//    public void onMapReady(GoogleMap googleMap) {
+//        gm=googleMap;
+//        gm.addMarker(new MarkerOptions().position(new LatLng(51.44083,5.47778)));
+//    }
 }
