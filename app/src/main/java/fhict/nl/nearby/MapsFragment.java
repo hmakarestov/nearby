@@ -41,9 +41,9 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     LatLng locationCoordonates;
 
     TextView textViewName;
-    private MarkerOptions multiplemarkers = new MarkerOptions();
-    String currentUserId;
-    Boolean logOff = false;
+    MarkerOptions multiplemarkers = new MarkerOptions();
+    static String currentUserId;
+    public static Boolean logOff = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
