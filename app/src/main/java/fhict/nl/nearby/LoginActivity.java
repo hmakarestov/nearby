@@ -19,6 +19,9 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -74,6 +77,11 @@ public class LoginActivity extends AppCompatActivity {
         if (requestCode == LAUNCH_REGISTER_ACTIVITY) {
             if(resultCode == Activity.RESULT_OK){
                 //user is created and is logged in
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                //create new user object in the database
+                DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
+                MyUser newUser = new MyUser( 0, 0, true);
+                userDatabase.child(user.getUid()).setValue(newUser);
                 setResult(Activity.RESULT_OK);
                 finish();
             }
@@ -143,5 +151,15 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+}
+class MyUser{
+    public double lat;
+    public double lng;
+    public boolean logged;
+    public MyUser(double lat, double lng, boolean logged) {
+        this.lat = lat;
+        this.lng = lng;
+        this.logged = true;
     }
 }

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -22,6 +23,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener {
     private static final int RC_SIGN_IN = 123;
@@ -31,10 +39,17 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     GoogleMap gm;
     MarkerOptions markerOptions;
     LatLng locationCoordonates;
+
+    TextView textViewName;
+    private MarkerOptions multiplemarkers = new MarkerOptions();
+    String currentUserId;
+    Boolean logOff = false;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         //inflate the fragment
         view = inflater.inflate(R.layout.fragment_maps, container, false);
+        textViewName = view.findViewById(R.id.textView_user_testing);
 
         //insert map inside the fragment view "map"
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
@@ -54,41 +69,75 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         }
         //Right now permission for location has to be given manually, it's not implemented yet. NO PERMISSION = CRASH
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+
+        //called to see if any user is logged in
+        checkCurrentUser();
+
         return view;
     }
 
     //called the first time when the map loads | when you open the app
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        this.gm = googleMap;
-        locationCoordonates = new LatLng(-34, 151);
-        markerOptions = new MarkerOptions().position(locationCoordonates);
-        gm.addMarker(markerOptions.title("BLA BLA BLA"));
-        gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+        gm = googleMap;
     }
 
-    //this is called when the location is changed. This will change the marker position
+    //this is called when the location is changed. This will change the markers position
     @Override
     public void onLocationChanged(Location location) {
-        gm.clear();
-        locationCoordonates = new LatLng(location.getLatitude(), location.getLongitude());
-        markerOptions.position(locationCoordonates);
-        gm.addMarker(markerOptions.title("BLA BLA BLA"));
-        gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+        //update the location to the database
+        DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId);
+        userDatabase.child("lat").setValue(location.getLatitude());
+        userDatabase.child("lng").setValue(location.getLongitude());
     }
 
+    //NOT USED, part of the LocationListener interface
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
+    public void onStatusChanged(String provider, int status, Bundle extras) { }
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
+    public void onProviderEnabled(String provider) { }
     @Override
-    public void onProviderDisabled(String provider) {
+    public void onProviderDisabled(String provider) { }
 
+    //method to check if any user is logged in. If not, will call createSignInIntent()
+    public void checkCurrentUser() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user != null){
+            //user is logged
+            textViewName.setText("LOGGED IN " +user.getEmail());
+            currentUserId = user.getUid();
+
+            //update the location of all users who are logged in
+            DatabaseReference allUsersDatabase = FirebaseDatabase.getInstance().getReference().child("users");
+            allUsersDatabase.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    gm.clear(); //clear the markers on the map, new ones will be inserted
+                    //get info about all the users individually
+                    for(DataSnapshot dataSnapshot1 : dataSnapshot.getChildren()){
+                        if((Boolean)dataSnapshot1.child("logged").getValue()){
+                            double lat = Double.valueOf(dataSnapshot1.child("lat").getValue().toString());
+                            double lng = Double.valueOf(dataSnapshot1.child("lng").getValue().toString());
+                            locationCoordonates = new LatLng(lat, lng);
+                            multiplemarkers.position(locationCoordonates);
+                            multiplemarkers.title(dataSnapshot1.getKey());
+                            gm.addMarker(multiplemarkers);
+                        }
+                        //set the logged value to true/false
+                        if(dataSnapshot1.getKey().equals(currentUserId)){
+                            DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
+                            if((Boolean)dataSnapshot1.child("logged").getValue() && logOff){
+                                user.setValue(false);
+                            }
+                            else if(!logOff){
+                                user.setValue(true);
+                            }
+                        }
+                    }
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) { }
+            });
+        }
     }
 }
