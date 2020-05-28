@@ -31,6 +31,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener {
     private static final int RC_SIGN_IN = 123;
 
@@ -101,7 +104,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
     //method to check if any user is logged in. If not, will call createSignInIntent()
     public void checkCurrentUser() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null){
             //user is logged
             textViewName.setText("LOGGED IN " +user.getEmail());
@@ -114,23 +117,31 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     gm.clear(); //clear the markers on the map, new ones will be inserted
                     //get info about all the users individually
-                    for(DataSnapshot dataSnapshot1 : dataSnapshot.getChildren()){
-                        if((Boolean)dataSnapshot1.child("logged").getValue()){
-                            double lat = Double.valueOf(dataSnapshot1.child("lat").getValue().toString());
-                            double lng = Double.valueOf(dataSnapshot1.child("lng").getValue().toString());
-                            locationCoordonates = new LatLng(lat, lng);
-                            multiplemarkers.position(locationCoordonates);
-                            multiplemarkers.title(dataSnapshot1.getKey());
-                            gm.addMarker(multiplemarkers);
-                        }
-                        //set the logged value to true/false
-                        if(dataSnapshot1.getKey().equals(currentUserId)){
-                            DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
-                            if((Boolean)dataSnapshot1.child("logged").getValue() && logOff){
-                                user.setValue(false);
-                            }
-                            else if(!logOff){
-                                user.setValue(true);
+                    for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
+                        if(dataSnapshotUsers.getKey().equals(user.getUid())){
+                            for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
+                                for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
+                                    if(dataSnapshotInfoUser.getKey().equals(dataSnapshotFriends.getKey()) || dataSnapshotInfoUser.getKey().equals(user.getUid())){
+                                        if((Boolean)dataSnapshotInfoUser.child("logged").getValue()){
+                                            double lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
+                                            double lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
+                                            locationCoordonates = new LatLng(lat, lng);
+                                            multiplemarkers.position(locationCoordonates);
+                                            multiplemarkers.title(dataSnapshotInfoUser.getKey());
+                                            gm.addMarker(multiplemarkers);
+                                        }
+                                        //set the logged value to true/false
+                                        if(dataSnapshotInfoUser.getKey().equals(currentUserId)){
+                                            DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
+                                            if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && logOff){
+                                                user.setValue(false);
+                                            }
+                                            else if(!logOff){
+                                                user.setValue(true);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

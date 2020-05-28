@@ -23,6 +23,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LoginActivity extends AppCompatActivity {
 
     EditText etEmail;
@@ -80,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 //create new user object in the database
                 DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
-                MyUser newUser = new MyUser( 0, 0, true);
+                MyUser newUser = new MyUser( 0, 0, new ArrayList<String>());
                 userDatabase.child(user.getUid()).setValue(newUser);
                 setResult(Activity.RESULT_OK);
                 finish();
@@ -157,9 +160,11 @@ class MyUser{
     public double lat;
     public double lng;
     public boolean logged;
-    public MyUser(double lat, double lng, boolean logged) {
+    public List<String> friends;
+    public MyUser(double lat, double lng, List<String> friends) {
         this.lat = lat;
         this.lng = lng;
         this.logged = true;
+        this.friends = friends;
     }
 }
