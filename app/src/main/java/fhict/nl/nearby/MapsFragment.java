@@ -119,12 +119,18 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                     //get info about all the users individually
                     for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
                         if(dataSnapshotUsers.getKey().equals(user.getUid())){
+                            double lat = Double.valueOf(dataSnapshotUsers.child("lat").getValue().toString());
+                            double lng = Double.valueOf(dataSnapshotUsers.child("lng").getValue().toString());
+                            locationCoordonates = new LatLng(lat, lng);
+                            multiplemarkers.position(locationCoordonates);
+                            multiplemarkers.title(dataSnapshotUsers.getKey());
+                            gm.addMarker(multiplemarkers);
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
                                 for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
                                     if(dataSnapshotInfoUser.getKey().equals(dataSnapshotFriends.getKey()) || dataSnapshotInfoUser.getKey().equals(user.getUid())){
                                         if((Boolean)dataSnapshotInfoUser.child("logged").getValue()){
-                                            double lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
-                                            double lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
+                                            lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
+                                            lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
                                             locationCoordonates = new LatLng(lat, lng);
                                             multiplemarkers.position(locationCoordonates);
                                             multiplemarkers.title(dataSnapshotInfoUser.getKey());
