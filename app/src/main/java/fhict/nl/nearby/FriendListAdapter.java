@@ -43,8 +43,8 @@ public class FriendListAdapter extends ArrayAdapter<String> {
         View view = layoutInflater.inflate(resource, null, false);
         TextView textViewName = view.findViewById(R.id.textView_request_friend_name);
         textViewName.setText(requestList.get(position));
-        Button button = view.findViewById(R.id.button_friend_request_accept);
-        button.setOnClickListener(new View.OnClickListener() {
+        Button buttonAccept = view.findViewById(R.id.button_friend_request_accept);
+        buttonAccept.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -61,6 +61,16 @@ public class FriendListAdapter extends ArrayAdapter<String> {
                 another_user_db.child("friends").updateChildren(frnd);
 
                 //remove friend request
+                DatabaseReference request_db = FirebaseDatabase.getInstance().getReference("friendRequests").child(user.getUid());
+                request_db.removeValue();
+            }
+        });
+        Button decline = view.findViewById(R.id.button_friend_request_deny);
+        decline.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //remove friend request
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 DatabaseReference request_db = FirebaseDatabase.getInstance().getReference("friendRequests").child(user.getUid());
                 request_db.removeValue();
             }
