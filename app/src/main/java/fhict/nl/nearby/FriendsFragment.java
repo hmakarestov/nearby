@@ -44,6 +44,10 @@ public class FriendsFragment extends Fragment {
     //used to get the current user id
     FirebaseUser user;
 
+
+    List<String> requestList;
+    ListView listView;
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         view =  inflater.inflate(R.layout.fragment_friends, container, false);
@@ -84,6 +88,33 @@ public class FriendsFragment extends Fragment {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) { }
         });
+
+
+        //SHOW FRIEND REQUESTS
+        listView = view.findViewById(R.id.listViewRequests);
+        DatabaseReference friends_db = FirebaseDatabase.getInstance().getReference().child("friendRequests");
+        friends_db.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                requestList = new ArrayList<>();
+                for(DataSnapshot dataSnapshotFriends : dataSnapshot.getChildren()){
+                    if(dataSnapshotFriends.getKey().equals(user.getUid())){
+                        for(DataSnapshot dataSnapshot1 : dataSnapshotFriends.getChildren()){
+                            requestList.add(dataSnapshot1.getKey());
+                        }
+                    }
+                }
+                //creating the adapter
+                FriendListAdapter adapter = new FriendListAdapter(getContext(), R.layout.friend_request_list, requestList);
+                //attaching adapter to the listview
+                listView.setAdapter(adapter);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) { }
+        });
+
+
+
         return view;
     }
 
@@ -93,9 +124,10 @@ public class FriendsFragment extends Fragment {
 
         //the friend will be added only if the id is not from the current logged user or if the friend is a registered user id
         if(map.containsKey(id) && !(id.equals(user.getUid()))){
-            Map<String, Object> mapNew = new HashMap<>();
-            mapNew.put(id, "userName");
-            user_db.child("friends").updateChildren(mapNew);
+            DatabaseReference request_db = FirebaseDatabase.getInstance().getReference("friendRequests");
+            Map<String, Object> requests = new HashMap<>();
+            requests.put(user.getUid(), "userName");
+            request_db.child(id).updateChildren(requests);
         }
     }
 }
