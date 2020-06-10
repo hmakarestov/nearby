@@ -141,7 +141,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                             double lng = Double.valueOf(dataSnapshotUsers.child("lng").getValue().toString());
                             locationCoordonates = new LatLng(lat, lng);
                             multiplemarkers.position(locationCoordonates);
-                            multiplemarkers.title(dataSnapshotUsers.child("email").getValue().toString());
+                            multiplemarkers.title(dataSnapshotUsers.child("nickname").getValue().toString());
                             multiplemarkers.draggable(true);
                             gm.addMarker(multiplemarkers);
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
@@ -152,7 +152,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                             lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
                                             locationCoordonates = new LatLng(lat, lng);
                                             multiplemarkers.position(locationCoordonates);
-                                            multiplemarkers.title(dataSnapshotInfoUser.child("email").getValue().toString());
+                                            multiplemarkers.title(dataSnapshotInfoUser.child("nickname").getValue().toString());
                                             gm.addMarker(multiplemarkers);
                                         }
                                         //set the logged value to true/false
