@@ -79,12 +79,6 @@ public class LoginActivity extends AppCompatActivity {
 
         if (requestCode == LAUNCH_REGISTER_ACTIVITY) {
             if(resultCode == Activity.RESULT_OK){
-                //user is created and is logged in
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                //create new user object in the database
-                DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
-                MyUser newUser = new MyUser( 0, 0, new ArrayList<String>());
-                userDatabase.child(user.getUid()).setValue(newUser);
                 setResult(Activity.RESULT_OK);
                 finish();
             }
@@ -156,15 +150,4 @@ public class LoginActivity extends AppCompatActivity {
         return true;
     }
 }
-class MyUser{
-    public double lat;
-    public double lng;
-    public boolean logged;
-    public List<String> friends;
-    public MyUser(double lat, double lng, List<String> friends) {
-        this.lat = lat;
-        this.lng = lng;
-        this.logged = true;
-        this.friends = friends;
-    }
-}
+

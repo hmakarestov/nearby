@@ -17,10 +17,17 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity {
 
     EditText etEmail;
+    EditText etNickname;
     EditText etPassword;
     EditText etRepeatPassword;
     Button btnRegisterEmail;
@@ -40,6 +47,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         //UI
         etEmail = findViewById(R.id.editTextRegisterEmail);
+        etNickname = findViewById(R.id.editTextRegisterNickname);
         etPassword = findViewById(R.id.editTextRegisterPassword);
         etRepeatPassword = findViewById(R.id.editTextRegisterRepeatPassword);
         btnRegisterEmail = findViewById(R.id.btnRegisterEmail);
@@ -70,6 +78,7 @@ public class RegisterActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
+
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
@@ -77,6 +86,12 @@ public class RegisterActivity extends AppCompatActivity {
                     //signup and sign in success
                     Log.i("EmailRegister", "Success");
                     setResult(Activity.RESULT_OK);
+                    //user is created and is logged in
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    //create new user object in the database
+                    DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
+                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new ArrayList<String>());
+                    userDatabase.child(user.getUid()).setValue(newUser);
                     finish();
                 }else{
                     Exception e = task.getException();
@@ -129,5 +144,22 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+}
+
+class MyUser{
+    public String nickname;
+    public String email;
+    public double lat;
+    public double lng;
+    public boolean logged;
+    public List<String> friends;
+    public MyUser(String nickname, String email, double lat, double lng, List<String> friends) {
+        this.nickname = nickname;
+        this.email = email;
+        this.lat = lat;
+        this.lng = lng;
+        this.logged = true;
+        this.friends = friends;
     }
 }
