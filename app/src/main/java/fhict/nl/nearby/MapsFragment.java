@@ -69,10 +69,15 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-
+            requestPermissions(
+                            new String[] {Manifest.permission.ACCESS_FINE_LOCATION },
+                            10);
         }
-        //Right now permission for location has to be given manually, it's not implemented yet. NO PERMISSION = CRASH
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+        else{
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+        }
+
+
 
         //called to see if any user is logged in
         checkCurrentUser();

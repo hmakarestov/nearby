@@ -48,7 +48,7 @@ public class FriendListAdapter extends ArrayAdapter<String> {
             @Override
             public void onClick(View v) {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                //add friend to the curreent user
+                //add friend to the current user
                 DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
                 Map<String, Object> friendsMap = new HashMap<>();
                 friendsMap.put(requestList.get(position), "userName");
