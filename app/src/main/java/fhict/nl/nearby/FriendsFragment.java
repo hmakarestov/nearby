@@ -80,7 +80,11 @@ public class FriendsFragment extends Fragment {
                     //if the current id is the logged user, it will go through all his friend list and add them to the listview
                     if(dataSnapshotUser.getKey().equals(user.getUid())){
                         for(DataSnapshot dataSnapshotFriends : dataSnapshotUser.child("friends").getChildren()){
-                            adapter.add(dataSnapshotFriends.getKey());
+                            for(DataSnapshot dataSnapshotFriendsNickname : dataSnapshot.getChildren()){
+                                if(dataSnapshotFriends.getKey().equals(dataSnapshotFriendsNickname.getKey())){
+                                    adapter.add(dataSnapshotFriendsNickname.child("nickname").getValue().toString());
+                                }
+                            }
                         }
                     }
                 }
