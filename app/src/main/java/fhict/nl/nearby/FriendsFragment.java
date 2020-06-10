@@ -76,7 +76,8 @@ public class FriendsFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 //put all the users in the map, used to see if the added friend is a registered user id
                 for(DataSnapshot dataSnapshotUser : dataSnapshot.getChildren()){
-                    map.put(dataSnapshotUser.getKey(), "userName");
+                    map.put(dataSnapshotUser.getKey(), dataSnapshotUser.child("nickname").getValue().toString());
+                    map.put(dataSnapshotUser.child("nickname").getValue().toString(), dataSnapshotUser.getKey());
                     //if the current id is the logged user, it will go through all his friend list and add them to the listview
                     if(dataSnapshotUser.getKey().equals(user.getUid())){
                         for(DataSnapshot dataSnapshotFriends : dataSnapshotUser.child("friends").getChildren()){
@@ -122,16 +123,17 @@ public class FriendsFragment extends Fragment {
         return view;
     }
 
-    public void addFriend(String id){
+    public void addFriend(String nickname){
         //get the logged user id
-        DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+        DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users");
 
         //the friend will be added only if the id is not from the current logged user or if the friend is a registered user id
-        if(map.containsKey(id) && !(id.equals(user.getUid()))){
+        if(map.containsValue(nickname)){
             DatabaseReference request_db = FirebaseDatabase.getInstance().getReference("friendRequests");
             Map<String, Object> requests = new HashMap<>();
-            requests.put(user.getUid(), "userName");
-            request_db.child(id).updateChildren(requests);
+            requests.put(user.getUid(), nickname);
+            String id_user = (String)map.get(nickname);
+            request_db.child(id_user).updateChildren(requests);
         }
     }
 }
