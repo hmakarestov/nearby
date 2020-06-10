@@ -22,6 +22,7 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -76,6 +77,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         //called to see if any user is logged in
         checkCurrentUser();
 
+
         return view;
     }
 
@@ -83,6 +85,22 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     @Override
     public void onMapReady(GoogleMap googleMap) {
         gm = googleMap;
+        gm.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(Marker marker) {
+
+            }
+
+            @Override
+            public void onMarkerDrag(Marker marker) {
+
+            }
+
+            @Override
+            public void onMarkerDragEnd(Marker marker) {
+
+            }
+        });
     }
 
     //this is called when the location is changed. This will change the markers position
@@ -123,7 +141,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                             double lng = Double.valueOf(dataSnapshotUsers.child("lng").getValue().toString());
                             locationCoordonates = new LatLng(lat, lng);
                             multiplemarkers.position(locationCoordonates);
-                            multiplemarkers.title(dataSnapshotUsers.getKey());
+                            multiplemarkers.title(dataSnapshotUsers.child("email").getValue().toString());
+                            multiplemarkers.draggable(true);
                             gm.addMarker(multiplemarkers);
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
                                 for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
@@ -133,7 +152,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                             lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
                                             locationCoordonates = new LatLng(lat, lng);
                                             multiplemarkers.position(locationCoordonates);
-                                            multiplemarkers.title(dataSnapshotInfoUser.getKey());
+                                            multiplemarkers.title(dataSnapshotInfoUser.child("email").getValue().toString());
                                             gm.addMarker(multiplemarkers);
                                         }
                                         //set the logged value to true/false
@@ -157,4 +176,5 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             });
         }
     }
+
 }
