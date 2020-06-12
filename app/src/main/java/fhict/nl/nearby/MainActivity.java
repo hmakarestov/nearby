@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Window;
 import android.widget.TextView;
@@ -25,9 +26,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
+        SharedPreferences pref = getApplication().getSharedPreferences("myinfo", MODE_PRIVATE);
+        String password = pref.getString("password", "");
 
-        if(mAuth.getCurrentUser() == null){
+        if(mAuth.getCurrentUser() == null || password.equals("")){
             //not signed in
+            mAuth.signOut();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivityForResult(intent, LAUNCH_LOGIN_ACTIVITY);
         }else{
