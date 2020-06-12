@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -97,12 +98,16 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        final String password = etPassword.getText().toString().trim();
         mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
                     //login success
+                    SharedPreferences pref = getApplicationContext().getSharedPreferences("myinfo", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putString("password", password);
+                    editor.apply();
                     setResult(Activity.RESULT_OK);
                     finish();
                 }else{

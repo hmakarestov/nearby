@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -85,6 +86,10 @@ public class RegisterActivity extends AppCompatActivity {
                 if(task.isSuccessful()){
                     //signup and sign in success
                     Log.i("EmailRegister", "Success");
+                    SharedPreferences pref = getApplicationContext().getSharedPreferences("myinfo", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putString("password", etPassword.getText().toString().trim());
+                    editor.apply();
                     setResult(Activity.RESULT_OK);
                     //user is created and is logged in
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -154,6 +159,8 @@ class MyUser{
     public double lng;
     public boolean logged;
     public List<String> friends;
+
+    public MyUser(){} //needed for profile
     public MyUser(String nickname, String email, double lat, double lng, List<String> friends) {
         this.nickname = nickname;
         this.email = email;
