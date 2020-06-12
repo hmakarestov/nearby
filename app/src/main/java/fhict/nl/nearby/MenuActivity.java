@@ -2,14 +2,29 @@ package fhict.nl.nearby;
 
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.core.Platform;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -21,7 +36,6 @@ import androidx.appcompat.widget.Toolbar;
 public class MenuActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +57,33 @@ public class MenuActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        View headerView = navigationView.getHeaderView(0);
+        final TextView tvName = headerView.findViewById(R.id.tvNavName);
+        final TextView tvEmail = headerView.findViewById(R.id.tvNavEmail);
+        final ImageView ivPic = headerView.findViewById(R.id.ivNavPic);
+
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user != null){
+            DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+            userDatabase.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    MyUser user = dataSnapshot.getValue(MyUser.class);
+                    tvEmail.setText(user.email);
+                    tvName.setText(user.nickname);
+
+                    //Image Loading
+                    StorageReference imageReference = FirebaseStorage.getInstance().getReference().child(user.image);
+                    Glide.with(getApplicationContext()).load(imageReference).into(ivPic);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
     }
 
     @Override
