@@ -95,7 +95,8 @@ public class RegisterActivity extends AppCompatActivity {
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                     //create new user object in the database
                     DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
-                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new ArrayList<String>());
+                    //the only image that uses extension
+                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new ArrayList<String>(), "default_user.png");
                     userDatabase.child(user.getUid()).setValue(newUser);
                     finish();
                 }else{
@@ -159,14 +160,16 @@ class MyUser{
     public double lng;
     public boolean logged;
     public List<String> friends;
+    public String image;
 
     public MyUser(){} //needed for profile
-    public MyUser(String nickname, String email, double lat, double lng, List<String> friends) {
+    public MyUser(String nickname, String email, double lat, double lng, List<String> friends, String image) {
         this.nickname = nickname;
         this.email = email;
         this.lat = lat;
         this.lng = lng;
         this.logged = true;
         this.friends = friends;
+        this.image = image;
     }
 }
