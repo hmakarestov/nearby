@@ -3,14 +3,18 @@ package fhict.nl.nearby;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -21,6 +25,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -32,10 +37,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener {
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
+public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener, GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapClickListener {
     private static final int RC_SIGN_IN = 123;
 
     View view;
@@ -43,6 +52,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     GoogleMap gm;
     MarkerOptions markerOptions;
     LatLng locationCoordonates;
+    Marker meetingPoint = null;
 
     TextView textViewName;
     MarkerOptions multiplemarkers = new MarkerOptions();
@@ -77,8 +87,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
         }
 
-
-
         //called to see if any user is logged in
         checkCurrentUser();
 
@@ -90,6 +98,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     @Override
     public void onMapReady(GoogleMap googleMap) {
         gm = googleMap;
+        gm.getUiSettings().setZoomControlsEnabled(true);
+        gm.getUiSettings().setMyLocationButtonEnabled(true);
+        gm.getUiSettings().isCompassEnabled();
+
         gm.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(Marker marker) {
@@ -106,7 +118,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
             }
         });
+        gm.setOnMapLongClickListener(this);
+        gm.setOnMapClickListener(this);
     }
+
 
     //this is called when the location is changed. This will change the markers position
     @Override
@@ -182,4 +197,29 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         }
     }
 
+    //create a pin when you hold on a point on the map
+    //if you hold on the pin you can drag it to a different location
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        Log.d(TAG, "onMapLongClick: " + latLng.toString());
+        if(meetingPoint==null)
+        {
+            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
+                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        }
+        else
+        {
+//            Toast.makeText(this.getContext(),"You already have a marker",
+            meetingPoint.remove();
+            meetingPoint = null;
+        }
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        if(meetingPoint==null)
+        {
+
+        }
+    }
 }
