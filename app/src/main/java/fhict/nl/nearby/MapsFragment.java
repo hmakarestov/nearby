@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -53,6 +55,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     MarkerOptions markerOptions;
     LatLng locationCoordonates;
     Marker meetingPoint = null;
+    boolean centered = true;
 
     TextView textViewName;
     MarkerOptions multiplemarkers = new MarkerOptions();
@@ -89,6 +92,18 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         //called to see if any user is logged in
         checkCurrentUser();
+        Button centerBtn = view.findViewById(R.id.recenter);
+        centerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (centered == false)
+                {
+                    centered = true;
+                    gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+                }
+            }
+        });
+
 
 
         return view;
@@ -120,6 +135,14 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         });
         gm.setOnMapLongClickListener(this);
         gm.setOnMapClickListener(this);
+        gm.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int reason) {
+                if (reason ==REASON_GESTURE) {
+                    centered=false;
+                }
+            }
+        });
     }
 
 
@@ -130,6 +153,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId);
         userDatabase.child("lat").setValue(location.getLatitude());
         userDatabase.child("lng").setValue(location.getLongitude());
+        if (centered == true) {
+            locationCoordonates = new LatLng(location.getLatitude(), location.getLongitude());
+            gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+        }
     }
 
     //NOT USED, part of the LocationListener interface
@@ -178,6 +205,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                         //set the logged value to true/false
                                         if(dataSnapshotInfoUser.getKey().equals(currentUserId)){
                                             DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
+
+                                            Log.d("Change","Location changed");
                                             if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && logOff){
                                                 user.setValue(false);
                                             }
