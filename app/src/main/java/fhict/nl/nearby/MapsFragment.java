@@ -2,26 +2,33 @@ package fhict.nl.nearby;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.common.internal.Constants;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -53,6 +60,9 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     SupportMapFragment mapFragment;
     GoogleMap gm;
     MarkerOptions markerOptions;
+
+    Location userLocation;
+    LatLng userLatLng;
     LatLng locationCoordonates;
     Marker meetingPoint = null;
     boolean centered = true;
@@ -64,6 +74,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
+
         //inflate the fragment
         view = inflater.inflate(R.layout.fragment_maps, container, false);
         textViewName = view.findViewById(R.id.textView_user_testing);
@@ -74,6 +86,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         //check permissions for location
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -90,6 +103,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
         }
 
+        userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
+        userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
         //called to see if any user is logged in
         checkCurrentUser();
         Button centerBtn = view.findViewById(R.id.recenter);
@@ -99,7 +114,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 if (centered == false)
                 {
                     centered = true;
-                    gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+                    gm.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
                 }
             }
         });
@@ -143,6 +158,35 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 }
             }
         });
+        gm.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+
+                if (marker.equals(meetingPoint))
+                {
+                    centered = false;
+                    gm.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+                    Fragment newFragment = new MeetPointMenuFragment();
+                    FrameLayout markerFrame = view.findViewById(R.id.MarkerFrame);
+                    markerFrame.setVisibility(View.VISIBLE);
+
+
+                    // consider using Java coding conventions (upper first char class names!!!)
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+                    // Replace whatever is in the fragment_container view with this fragment,
+                    // and add the transaction to the back stack
+                    transaction.replace(R.id.MeetPointFragm, newFragment);
+
+                    transaction.addToBackStack(null);
+
+                    // Commit the transaction
+                    transaction.commit();
+                    return true;
+                }
+                return  false;
+            }
+        });
     }
 
 
@@ -154,8 +198,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         userDatabase.child("lat").setValue(location.getLatitude());
         userDatabase.child("lng").setValue(location.getLongitude());
         if (centered == true) {
-            locationCoordonates = new LatLng(location.getLatitude(), location.getLongitude());
-            gm.moveCamera(CameraUpdateFactory.newLatLng(locationCoordonates));
+            userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+            gm.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
         }
     }
 
@@ -189,7 +233,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                             locationCoordonates = new LatLng(lat, lng);
                             multiplemarkers.position(locationCoordonates);
                             multiplemarkers.title(dataSnapshotUsers.child("nickname").getValue().toString());
-                            multiplemarkers.draggable(true);
+                            multiplemarkers.draggable(false);
                             gm.addMarker(multiplemarkers);
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
                                 for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
@@ -241,6 +285,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 //            Toast.makeText(this.getContext(),"You already have a marker",
             meetingPoint.remove();
             meetingPoint = null;
+            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
+                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
         }
     }
 
@@ -251,4 +297,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         }
     }
+
+
 }

@@ -74,6 +74,7 @@ public class FriendsFragment extends Fragment {
         user_db.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                adapter.clear();
                 //put all the users in the map, used to see if the added friend is a registered user id
                 for(DataSnapshot dataSnapshotUser : dataSnapshot.getChildren()){
                     map.put(dataSnapshotUser.getKey(), dataSnapshotUser.child("nickname").getValue().toString());

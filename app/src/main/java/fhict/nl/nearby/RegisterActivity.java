@@ -23,6 +23,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity {
@@ -96,7 +97,7 @@ public class RegisterActivity extends AppCompatActivity {
                     //create new user object in the database
                     DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
                     //the only image that uses extension
-                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new ArrayList<String>(), "default_user.png");
+                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new HashMap<String, String>(), "default_user.png");
                     userDatabase.child(user.getUid()).setValue(newUser);
                     finish();
                 }else{
@@ -153,17 +154,17 @@ public class RegisterActivity extends AppCompatActivity {
     }
 }
 
-class MyUser{
+class MyUser extends HashMap {
     public String nickname;
     public String email;
     public double lat;
     public double lng;
     public boolean logged;
-    public List<String> friends;
+    public HashMap<String, String> friends;
     public String image;
 
     public MyUser(){} //needed for profile
-    public MyUser(String nickname, String email, double lat, double lng, List<String> friends, String image) {
+    public MyUser(String nickname, String email, double lat, double lng, HashMap<String,String> friends, String image) {
         this.nickname = nickname;
         this.email = email;
         this.lat = lat;
