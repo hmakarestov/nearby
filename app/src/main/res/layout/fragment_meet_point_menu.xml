@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/frameLayout2"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="fill"
     android:background="#00FBAEAE"
+    android:clickable="false"
+    android:clipChildren="false"
     android:visibility="visible"
     tools:context="MeetPointMenuFragment">
+
+    <Button
+        android:id="@+id/cancel"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="#FF0B0B"
+        android:foreground="@android:drawable/ic_menu_close_clear_cancel"
+        android:foregroundGravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/dasdasd"
@@ -16,15 +30,15 @@
         android:background="#C3FFFFFF"
         android:orientation="vertical"
         android:visibility="visible"
-        tools:layout_conversion_absoluteHeight="731dp"
-        tools:layout_conversion_absoluteWidth="411dp"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ListView
             android:id="@+id/friends_list_share"
             android:layout_width="match_parent"
-            android:layout_height="232dp" />
+            android:layout_height="232dp">
+
+        </ListView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -37,7 +51,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="70dp"
                 android:layout_weight="1"
-                android:background="#00FFFFFF"
+                android:background="#4CAF50"
                 android:foreground="@android:drawable/ic_menu_save"
                 android:foregroundGravity="center" />
 
@@ -47,7 +61,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="70dp"
                 android:layout_weight="1"
-                android:background="#00FFFFFF"
+                android:background="#2196F3"
                 android:foreground="@android:drawable/ic_menu_share"
                 android:foregroundGravity="center" />
 
@@ -57,11 +71,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="70dp"
                 android:layout_weight="1"
-                android:background="#00FFFFFF"
-                android:foreground="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="#FF0B0B"
+                android:foreground="@android:drawable/ic_menu_delete"
                 android:foregroundGravity="center" />
 
         </LinearLayout>
 
     </LinearLayout>
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

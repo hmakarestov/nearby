@@ -1,6 +1,7 @@
 package fhict.nl.nearby;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.common.internal.Constants;
@@ -48,13 +50,19 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener, GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener {
     private static final int RC_SIGN_IN = 123;
+    private static View statview;
+
+    static MapMarker currentMarker = null;
+    static String key;
 
     View view;
     SupportMapFragment mapFragment;
@@ -66,11 +74,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     LatLng locationCoordonates;
     Marker meetingPoint = null;
     boolean centered = true;
-
     TextView textViewName;
     MarkerOptions multiplemarkers = new MarkerOptions();
     static String currentUserId;
+    static Fragment newFragment;
     public static Boolean logOff = false;
+    public static FragmentManager fm;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -120,7 +129,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         });
 
 
-
+        statview = view;
         return view;
     }
 
@@ -158,6 +167,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 }
             }
         });
+        fm = getFragmentManager();
         gm.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
@@ -166,13 +176,13 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 {
                     centered = false;
                     gm.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
-                    Fragment newFragment = new MeetPointMenuFragment();
+                    newFragment = new MeetPointMenuFragment();
                     FrameLayout markerFrame = view.findViewById(R.id.MarkerFrame);
                     markerFrame.setVisibility(View.VISIBLE);
 
 
                     // consider using Java coding conventions (upper first char class names!!!)
-                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    FragmentTransaction transaction = fm.beginTransaction();
 
                     // Replace whatever is in the fragment_container view with this fragment,
                     // and add the transaction to the back stack
@@ -279,6 +289,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         {
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+
+
         }
         else
         {
@@ -288,6 +300,14 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
         }
+
+        LatLng coordinates = meetingPoint.getPosition();
+        DatabaseReference marker_db = FirebaseDatabase.getInstance().getReference().child("markers");
+
+        MapMarker newMarker = new MapMarker(coordinates, FirebaseAuth.getInstance().getCurrentUser().getUid());
+        currentMarker = newMarker;
+        key = marker_db.push().getKey();
+        marker_db.child(key).setValue(newMarker);// updateChildren(friendsMap);
     }
 
     @Override
@@ -295,6 +315,48 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         if(meetingPoint==null)
         {
 
+        }
+    }
+
+    public static void KillFragment()
+    {
+        // consider using Java coding conventions (upper first char class names!!!)
+        FragmentTransaction transaction = fm.beginTransaction();
+
+        // Replace whatever is in the fragment_container view with this fragment,
+        // and add the transaction to the back stack
+        //transaction.remove(newFragment);
+        transaction.hide(newFragment);
+
+        FrameLayout frameLayout = statview.findViewById(R.id.MarkerFrame);
+        frameLayout.setVisibility(statview.INVISIBLE);
+
+        transaction.addToBackStack(null);
+
+        // Commit the transaction
+        transaction.commit();
+    }
+    public  static MapMarker getCurrentMarker()
+    {
+        return currentMarker;
+    }
+
+    public  class MapMarker{
+        public double Latitude, Longitude;
+        public String User;
+        public ArrayList<String> friends;
+
+        public MapMarker(LatLng coordinates, String user)
+        {
+            Latitude = coordinates.latitude;
+            Longitude = coordinates.longitude;
+            User = user;
+            friends = new ArrayList<String>();
+        }
+
+        public void AddFriend(String user)
+        {
+            friends.add(user);
         }
     }
 
