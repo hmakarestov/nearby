@@ -72,7 +72,6 @@ public class MeetPointMenuFragment extends Fragment {
                             for(DataSnapshot dataSnapshotFriendsNickname : dataSnapshot.getChildren()){
                                 if(dataSnapshotFriends.getKey().equals(dataSnapshotFriendsNickname.getKey())){
                                     adapter.add(dataSnapshotFriendsNickname.child("nickname").getValue().toString());
-                                    Log.d(TAG, "Friend found");
                                 }
                             }
                         }
@@ -101,44 +100,81 @@ public class MeetPointMenuFragment extends Fragment {
         Fview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String nickname = parent.getItemAtPosition(position).toString();
-                if (!friends_share.contains(nickname))
-                {
-                    friends_share.add(nickname);
-                    Log.d("NewFriend", nickname);
-                }
+                final String nickname = parent.getItemAtPosition(position).toString();
+                final DatabaseReference users = FirebaseDatabase.getInstance().getReference().child("users");
+                users.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()) {
+                            String id = "";
+                            int index = 1;
+                            while ((dataSnapshotMarker.getValue().toString()).charAt(index)!='=')
+                            {
+                                id+=(dataSnapshotMarker.getValue().toString()).charAt(index);
+                                index++;
+                            }
+                            if (dataSnapshotMarker.child("nickname").getValue().toString() == nickname && !friends_share.contains(id)) {
+                                Log.d("Friend added", dataSnapshotMarker.getKey());
+                                friends_share.add(dataSnapshotMarker.getKey());
+                            }
+                        }
+                    }
 
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
 
+        Button deleteButton = (Button) view.findViewById(R.id.Delete);
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MapsFragment.currentMarker.RemoveMarker();
+                MapsFragment.KillFragment();
+            }
+        });
 
         Button shareBtn = (Button) view.findViewById((R.id.Share));
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends");
-                Log.d("current user", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                map.clear();
 
+                DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends");
                 user_db.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot dataSnapshotUser : dataSnapshot.getChildren()) {
-                            map.put(dataSnapshotUser.getKey(), dataSnapshotUser.child("nickname").getValue().toString());
+                            String id = "";
+                            int index = 1;
+                            while ((dataSnapshot.getValue().toString()).charAt(index)!='=')
+                            {
+                                id+=(dataSnapshot.getValue().toString()).charAt(index);
+                                index++;
+                            }
+                            map.put("UserID", id);
                         }
+                        MapsFragment.MapMarker marker = MapsFragment.getCurrentMarker();
+
+
+                        for (Map.Entry<String, Object> entry : map.entrySet()) {
+                            if (friends_share.contains(entry.getValue().toString()))
+                            {
+                                marker.AddFriend(entry.getValue().toString());
+                            }
+                        }
+
+                        marker.UpdateMarkerInDb();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) { }
                 });
-                for (String nickname: friends_share)
-                {
 
-                    if(map.containsValue(nickname)){
-                        MapsFragment.MapMarker marker = MapsFragment.getCurrentMarker();
-                        marker.AddFriend(nickname);
-                    }
-                }
             }
         });
 

@@ -46,16 +46,6 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/Save"
-                style="@style/Widget.AppCompat.Button"
-                android:layout_width="wrap_content"
-                android:layout_height="70dp"
-                android:layout_weight="1"
-                android:background="#4CAF50"
-                android:foreground="@android:drawable/ic_menu_save"
-                android:foregroundGravity="center" />
-
-            <Button
                 android:id="@+id/Share"
                 style="@style/Widget.AppCompat.Button"
                 android:layout_width="wrap_content"
@@ -66,7 +56,7 @@
                 android:foregroundGravity="center" />
 
             <Button
-                android:id="@+id/Cancel"
+                android:id="@+id/Delete"
                 style="@style/Widget.AppCompat.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="70dp"
