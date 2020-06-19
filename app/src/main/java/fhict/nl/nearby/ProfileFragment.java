@@ -114,6 +114,9 @@ public class ProfileFragment extends Fragment {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     ClearErrors();
+                    if (getActivity() == null) {
+                        return;
+                    }
                     MyUser user = dataSnapshot.getValue(MyUser.class);
                     etEmail.setText(user.email);
                     etName.setText(user.nickname);

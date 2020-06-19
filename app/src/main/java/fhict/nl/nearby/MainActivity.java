@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     final int LAUNCH_LOGIN_ACTIVITY = 0;
+    final int LAUNCH_MENU_ACTIVITY = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +39,10 @@ public class MainActivity extends AppCompatActivity {
             if(resultCode == Activity.RESULT_OK){
                 //user is logged in
                 LaunchActivities();
-            }else{
-                //dont think this is ever reached
+            }
+        }else{
+            if(requestCode == LAUNCH_MENU_ACTIVITY){
+                CheckPermissions();
             }
         }
     }
@@ -47,14 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private void LaunchActivities(){
         //demo showing login success
         Intent intent = new Intent(MainActivity.this, MenuActivity.class);
-        startActivity(intent);
-
-
-        //you can get user details.
-        //mAuth.getCurrentUser().getEmail() -> email(changeable)
-        //mAuth.getCurrentUser().getUid() -> unique ID(static), maybe use this to save data in firebase
-
-        //TODO actually launching  the other main activities from here
+        startActivityForResult(intent, LAUNCH_MENU_ACTIVITY);
     }
 
     private void CheckPermissions(){
@@ -69,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             }, 400);
+        }else{
+            PermissionGranted();
         }
     }
 

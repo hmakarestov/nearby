@@ -246,6 +246,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                             multiplemarkers.title(dataSnapshotInfoUser.child("nickname").getValue().toString());
                                             gm.addMarker(multiplemarkers);
                                         }
+                                        /*
                                         //set the logged value to true/false
                                         if(dataSnapshotInfoUser.getKey().equals(currentUserId)){
                                             DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
@@ -258,6 +259,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                                 user.setValue(true);
                                             }
                                         }
+                                        */
                                     }
                                 }
                             }

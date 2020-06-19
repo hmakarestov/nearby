@@ -70,6 +70,7 @@ public class MenuActivity extends AppCompatActivity {
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user != null){
             DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+            userDatabase.child("logged").setValue(true);
             userDatabase.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -103,10 +104,13 @@ public class MenuActivity extends AppCompatActivity {
         switch (item.getItemId())
         {
             case R.id.action_logout:
+                final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if(user != null){
+                    DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+                    userDatabase.child("logged").setValue(false);
+                }
                 FirebaseAuth.getInstance().signOut();
                 finish();
-                startActivity(new Intent(this,MainActivity.class));
-                break;
         }
         return super.onOptionsItemSelected(item);
     }
