@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -54,6 +55,8 @@ public class MeetPointMenuFragment extends Fragment {
 
 
         ListView list = (ListView) view.findViewById(R.id.friends_list_share);
+        list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
         ArrayList<String> arrayList = new ArrayList<>();
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_spinner_item, arrayList);
 
@@ -159,6 +162,12 @@ public class MeetPointMenuFragment extends Fragment {
                             map.put("UserID", id);
                         }
                         MapsFragment.MapMarker marker = MapsFragment.getCurrentMarker();
+                        EditText titleET = view.findViewById(R.id.meet_point_editText);
+
+                        if (titleET.getText()!=null || titleET.getText().toString() != "")
+                        {
+                            marker.ChangeTitle(titleET.getText().toString());
+                        }
 
 
                         for (Map.Entry<String, Object> entry : map.entrySet()) {

@@ -13,8 +13,11 @@ import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,8 +44,19 @@ public class FriendListAdapter extends ArrayAdapter<String> {
     public View getView(final int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         LayoutInflater layoutInflater = LayoutInflater.from(context);
         View view = layoutInflater.inflate(resource, null, false);
-        TextView textViewName = view.findViewById(R.id.textView_request_friend_name);
-        textViewName.setText(requestList.get(position));
+        final TextView textViewName = view.findViewById(R.id.textView_request_friend_name);
+        DatabaseReference name = FirebaseDatabase.getInstance().getReference().child("users").child(requestList.get(position)).child("nickname");
+        name.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                textViewName.setText(dataSnapshot.getValue().toString());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
         Button buttonAccept = view.findViewById(R.id.button_friend_request_accept);
         buttonAccept.setOnClickListener(new View.OnClickListener() {
             @Override

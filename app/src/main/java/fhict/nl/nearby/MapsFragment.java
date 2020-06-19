@@ -112,10 +112,11 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         }
         else{
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+            userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
+            userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
         }
 
-        userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
-        userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+
         //called to see if any user is logged in
         checkCurrentUser();
         Button centerBtn = view.findViewById(R.id.recenter);
@@ -174,7 +175,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             @Override
             public boolean onMarkerClick(Marker marker) {
 
-                Log.d("marker clicked","");
                 if (marker.equals(meetingPoint))
                 {
                     centered = false;
@@ -307,17 +307,21 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 }
             });
 
-            allMarkers.addValueEventListener(new ValueEventListener() {
+            DatabaseReference friendMarkers = allMarkers;
+            friendMarkers.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    DataSnapshot markerFriends = dataSnapshot.child("Friends");
-                    for (DataSnapshot friend: markerFriends.getChildren()) {
-                        Log.d("friend marker",friend.getValue().toString());
-                        if (friend.getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+                    for(DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()) {
+                        for (DataSnapshot friend : dataSnapshotMarker.child("Friends").getChildren()) {
 
-                            LatLng latLng = new LatLng(Double.parseDouble(dataSnapshot.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshot.child("Longitude").getValue().toString()));
-                            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+                            Log.d("friend marker", friend.getValue().toString());
+
+                            if (friend.getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+
+                                LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
+                                gm.addMarker(new MarkerOptions().position(latLng).title(dataSnapshotMarker.child("Title").getValue().toString())
+                                        .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                            }
                         }
                     }
                 }
@@ -403,7 +407,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         public double Latitude, Longitude;
         public String User;
         public Map<String,Object> friends;
-        public String Id;
+        public String title;
+
+        public void ChangeTitle(String title)
+        {
+            this.title = title;
+        }
 
         public MapMarker(LatLng coordinates, String user)
         {
@@ -422,6 +431,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         {
             final DatabaseReference markers = FirebaseDatabase.getInstance().getReference().child("markers");
             markers.child(key).child("Friends").setValue(friends);
+            markers.child(key).child("Title").setValue(title);
         }
 
         public void  RemoveMarker()
