@@ -1,10 +1,13 @@
 package fhict.nl.nearby;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Window;
 import android.widget.TextView;
@@ -25,19 +28,7 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
 
-        mAuth = FirebaseAuth.getInstance();
-        SharedPreferences pref = getApplication().getSharedPreferences("myinfo", MODE_PRIVATE);
-        String password = pref.getString("password", "");
-
-        if(mAuth.getCurrentUser() == null || password.equals("")){
-            //not signed in
-            mAuth.signOut();
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            startActivityForResult(intent, LAUNCH_LOGIN_ACTIVITY);
-        }else{
-            //signed in
-            LaunchActivities();
-        }
+        CheckPermissions();
     }
 
     @Override
@@ -64,5 +55,53 @@ public class MainActivity extends AppCompatActivity {
         //mAuth.getCurrentUser().getUid() -> unique ID(static), maybe use this to save data in firebase
 
         //TODO actually launching  the other main activities from here
+    }
+
+    private void CheckPermissions(){
+        if((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ||
+                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ||
+                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) ||
+                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
+
+            requestPermissions(new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, 400);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 400: {
+                if (grantResults.length == 4 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[2] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[3] == PackageManager.PERMISSION_GRANTED){
+                    PermissionGranted();
+                }else{
+                    CheckPermissions();
+                }
+            }
+        }
+    }
+
+    private void PermissionGranted(){
+        mAuth = FirebaseAuth.getInstance();
+        SharedPreferences pref = getApplication().getSharedPreferences("myinfo", MODE_PRIVATE);
+        String password = pref.getString("password", "");
+
+        if(mAuth.getCurrentUser() == null || password.equals("")){
+            //not signed in
+            mAuth.signOut();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivityForResult(intent, LAUNCH_LOGIN_ACTIVITY);
+        }else{
+            //signed in
+            LaunchActivities();
+        }
     }
 }
