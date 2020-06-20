@@ -80,7 +80,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     MarkerOptions multiplemarkers = new MarkerOptions();
     static String currentUserId;
     static Fragment newFragment;
-    public static Boolean logOff = false;
+    //public static Boolean logOff = false;
     public static FragmentManager fm;
 
     public View onCreateView(@NonNull LayoutInflater inflater,

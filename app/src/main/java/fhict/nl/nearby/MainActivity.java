@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void LaunchActivities(){
         //demo showing login success
+
         Intent intent = new Intent(MainActivity.this, MenuActivity.class);
         startActivityForResult(intent, LAUNCH_MENU_ACTIVITY);
     }

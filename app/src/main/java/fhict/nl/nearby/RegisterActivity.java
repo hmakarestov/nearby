@@ -77,7 +77,7 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        String email = etEmail.getText().toString().trim();
+        final String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
 
@@ -92,14 +92,26 @@ public class RegisterActivity extends AppCompatActivity {
                     editor.putString("password", etPassword.getText().toString().trim());
                     editor.apply();
                     setResult(Activity.RESULT_OK);
-                    //user is created and is logged in
+
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    //create new user object in the database
                     DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference("users");
-                    //the only image that uses extension
-                    MyUser newUser = new MyUser(etNickname.getText().toString(), user.getEmail(), 0, 0, new HashMap<String, String>(), "default_user.png");
-                    userDatabase.child(user.getUid()).setValue(newUser);
-                    finish();
+                    String name = etNickname.getText().toString();
+                    if(name == null || name.isEmpty()){
+                        name = "";
+                    }
+
+                    MyUser newUser = new MyUser(name, email, 0, 0, "default_user.png");
+                    userDatabase.child(user.getUid()).setValue(newUser).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful()){
+                                setResult(Activity.RESULT_OK);
+                                finish();
+                            }else{
+                                Toast.makeText(RegisterActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
                 }else{
                     Exception e = task.getException();
                     if(e instanceof FirebaseAuthUserCollisionException){
@@ -154,7 +166,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 }
 
-class MyUser extends HashMap {
+class MyUser {
     public String nickname;
     public String email;
     public double lat;
@@ -165,14 +177,14 @@ class MyUser extends HashMap {
     public String image;
 
     public MyUser(){} //needed for profile
-    public MyUser(String nickname, String email, double lat, double lng, HashMap<String,String> friends, String image) {
+    public MyUser(String nickname, String email, double lat, double lng, String image) {
         this.nickname = nickname;
         this.email = email;
         this.lat = lat;
         this.lng = lng;
         this.logged = true;
         this.showLocation = true;
-        this.friends = friends;
+        this.friends = new HashMap<>();
         this.image = image;
     }
 }
