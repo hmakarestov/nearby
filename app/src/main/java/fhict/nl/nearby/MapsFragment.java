@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Criteria;
@@ -14,6 +16,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
 import android.util.Log;
@@ -32,6 +36,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
@@ -48,8 +53,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -57,8 +64,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.core.Platform;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.HashMap;
@@ -250,6 +262,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                     //get info about all the users individually
                     for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
                         if(dataSnapshotUsers.getKey().equals(user.getUid())){
+                            /*
                             double lat = Double.valueOf(dataSnapshotUsers.child("lat").getValue().toString());
                             double lng = Double.valueOf(dataSnapshotUsers.child("lng").getValue().toString());
                             locationCoordonates = new LatLng(lat, lng);
@@ -257,16 +270,37 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                             multiplemarkers.title(dataSnapshotUsers.child("nickname").getValue().toString());
                             multiplemarkers.draggable(false);
                             gm.addMarker(multiplemarkers);
+                            */
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
                                 for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
                                     if(dataSnapshotInfoUser.getKey().equals(dataSnapshotFriends.getKey()) || dataSnapshotInfoUser.getKey().equals(user.getUid())){
                                         if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && (Boolean)dataSnapshotInfoUser.child("showLocation").getValue()){
-                                            lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
-                                            lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
+                                            Double lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
+                                            Double lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
+                                            final String tmpName = dataSnapshotInfoUser.child("nickname").getValue().toString();
+                                            String url = dataSnapshotInfoUser.child("image").getValue().toString();
+
+                                            final LatLng tmpLatlng = new LatLng(lat, lng);
+                                            Task<Uri> uriTask = FirebaseStorage.getInstance().getReference().child(url).getDownloadUrl();
+                                            uriTask.addOnCompleteListener(new OnCompleteListener<Uri>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Uri> task) {
+                                                    if(task.isSuccessful()){
+                                                        TaskParam taskParam = new TaskParam(tmpLatlng, tmpName, task.getResult().toString());
+                                                        new LoadImageIntoMarker().execute(taskParam);
+                                                    }else{
+                                                        TaskParam taskParam = new TaskParam(tmpLatlng, tmpName, "");
+                                                        new LoadImageIntoMarker().execute(taskParam);
+                                                    }
+                                                }
+                                            });
+
+                                            /*
                                             locationCoordonates = new LatLng(lat, lng);
                                             multiplemarkers.position(locationCoordonates);
                                             multiplemarkers.title(dataSnapshotInfoUser.child("nickname").getValue().toString());
                                             gm.addMarker(multiplemarkers);
+                                            */
                                         }
                                     }
                                 }
@@ -534,5 +568,53 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                         Log.d(TAG, "onFailure: " + errorMessage);
                     }
                 });
+    }
+
+    private class LoadImageIntoMarker extends AsyncTask<TaskParam, Void, TaskParam>{
+
+        @Override
+        protected TaskParam doInBackground(TaskParam... taskParams) {
+            String url = taskParams[0].url;
+            if(!url.equals("")){
+                try {
+                    URL myUrl =  new URL(url);
+                    Bitmap bmp = BitmapFactory.decodeStream(myUrl.openConnection().getInputStream());
+                    Bitmap resizedBMP = Bitmap.createScaledBitmap(bmp, 100, 100, false);
+                    taskParams[0].setBmp(resizedBMP);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return taskParams[0];
+        }
+
+        @Override
+        protected void onPostExecute(TaskParam taskParam) {
+            super.onPostExecute(taskParam);
+            multiplemarkers.position(taskParam.latLng);
+            multiplemarkers.title(taskParam.name);
+            if(taskParam.bmp != null){
+                multiplemarkers.icon(BitmapDescriptorFactory.fromBitmap(taskParam.bmp));
+            }
+            gm.addMarker(multiplemarkers);
+        }
+    }
+
+    private class TaskParam{
+        LatLng latLng;
+        String name;
+        String url;
+        Bitmap bmp;
+
+        TaskParam(LatLng latLng, String name, String url){
+            this.latLng = latLng;
+            this.name = name;
+            this.url = url;
+            this.bmp = null;
+        }
+
+        public void setBmp(Bitmap bmp){
+            this.bmp = bmp;
+        }
     }
 }
