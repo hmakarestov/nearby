@@ -128,6 +128,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         statview = view;
         return view;
+
     }
 
     //called the first time when the map loads | when you open the app
@@ -279,7 +280,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                         {
                             LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
                             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                             currentMarker = new MapMarker(latLng, FirebaseAuth.getInstance().getCurrentUser().getUid());
                             Log.d("marker added", "asdasd");
                         }
@@ -305,7 +306,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
                                 LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
                                 gm.addMarker(new MarkerOptions().position(latLng).title(dataSnapshotMarker.child("Title").getValue().toString())
-                                        .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                                        .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                             }
                         }
                     }
@@ -331,7 +332,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         if(meetingPoint==null)
         {
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
             Log.d("meeting null", "asda");
 
         }
@@ -342,7 +343,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             meetingPoint = null;
             gm.clear();
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
             Log.d("meeting not null", "das");
 
         }
