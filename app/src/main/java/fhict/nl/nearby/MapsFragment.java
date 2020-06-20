@@ -2,9 +2,11 @@ package fhict.nl.nearby;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -25,12 +27,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.common.internal.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,9 +44,12 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -62,6 +71,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         GoogleMap.OnMapClickListener {
     private static final int RC_SIGN_IN = 123;
     private static View statview;
+    private GeofencingClient geofencingClient;
+    private GeofenceHelper geofenceHelper;
+    private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
+    private float GEOFENCE_RADIUS = 200;
+    private String GEOFENCE_ID = "SOME_GEOFENCE_ID";
+    private static final String TAG = "MapsFragment";
 
     static MapMarker currentMarker = null;
     static String key = null;
@@ -96,6 +111,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         //check permissions for location
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+        geofencingClient = LocationServices.getGeofencingClient(this.getActivity());
+        geofenceHelper = new GeofenceHelper(this.getActivity());
 
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(
@@ -113,17 +130,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
         //called to see if any user is logged in
         checkCurrentUser();
-        Button centerBtn = view.findViewById(R.id.recenter);
-        centerBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (centered == false)
-                {
-                    centered = true;
-                    gm.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
-                }
-            }
-        });
 
 
         statview = view;
@@ -136,7 +142,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     public void onMapReady(GoogleMap googleMap) {
         gm = googleMap;
         gm.getUiSettings().setZoomControlsEnabled(true);
-        gm.getUiSettings().setMyLocationButtonEnabled(true);
+        //gm.getUiSettings().setMyLocationButtonEnabled(true);
         gm.getUiSettings().isCompassEnabled();
 
         gm.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
@@ -195,6 +201,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 return  false;
             }
         });
+        enableUserLocation();
     }
 
 
@@ -307,6 +314,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                 LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
                                 gm.addMarker(new MarkerOptions().position(latLng).title(dataSnapshotMarker.child("Title").getValue().toString())
                                         .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+                                addCircle(latLng, GEOFENCE_RADIUS);
+                                addGeofence(latLng, GEOFENCE_RADIUS);
                             }
                         }
                     }
@@ -333,6 +342,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         {
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+            addCircle(latLng, GEOFENCE_RADIUS);
+            addGeofence(latLng, GEOFENCE_RADIUS);
             Log.d("meeting null", "asda");
 
         }
@@ -344,6 +355,8 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             gm.clear();
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+            addCircle(latLng, GEOFENCE_RADIUS);
+            addGeofence(latLng, GEOFENCE_RADIUS);
             Log.d("meeting not null", "das");
 
         }
@@ -454,5 +467,72 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         }
     }
 
+    private void enableUserLocation()
+    {
+        if(ContextCompat.checkSelfPermission(this.getActivity(),Manifest.permission.ACCESS_FINE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED)
+        {
+            gm.setMyLocationEnabled(true);
+        }
+        else
+        {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION))
+            {
+                ActivityCompat.requestPermissions(this.getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        FINE_LOCATION_ACCESS_REQUEST_CODE);
+            }
+            else
+            {
+                ActivityCompat.requestPermissions(this.getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        FINE_LOCATION_ACCESS_REQUEST_CODE);
+            }
+        }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == FINE_LOCATION_ACCESS_REQUEST_CODE)
+        {
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                //we have the permission
+                gm.setMyLocationEnabled(true);
+            }
+        }
+    }
+
+    private void addCircle(LatLng lt, float radius)
+    {
+        CircleOptions circleOptions = new CircleOptions();
+        circleOptions.center(lt);
+        circleOptions.radius(radius);
+        circleOptions.strokeColor(Color.YELLOW);
+        circleOptions.fillColor(Color.YELLOW);
+        circleOptions.strokeWidth(2);
+        gm.addCircle(circleOptions);
+    }
+    private void addGeofence(LatLng latLng, float radius)
+    {
+        Geofence geofence = geofenceHelper.getGeofence(GEOFENCE_ID,latLng,radius,
+                Geofence.GEOFENCE_TRANSITION_ENTER |
+                        Geofence.GEOFENCE_TRANSITION_DWELL |
+                        Geofence.GEOFENCE_TRANSITION_EXIT);
+        GeofencingRequest geofencingRequest = geofenceHelper.getGeofencingRequest(geofence);
+        PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
+
+        geofencingClient.addGeofences(geofencingRequest, pendingIntent)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.d(TAG, "onSuccess: GeofenceAdded...");
+            }
+        })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        String errorMessage = geofenceHelper.getErrorString(e);
+                        Log.d(TAG, "onFailure: " + errorMessage);
+                    }
+                });
+    }
 }
