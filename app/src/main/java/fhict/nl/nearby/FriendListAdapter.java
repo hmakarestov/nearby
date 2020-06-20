@@ -34,7 +34,7 @@ public class FriendListAdapter extends ArrayAdapter<String> {
 
     public FriendListAdapter(Context context, int resource, List<String> requestList) {
         super(context, resource, requestList);
-        this.context = getContext();
+        this.context = context;
         this.resource = resource;
         this.requestList = requestList;
     }

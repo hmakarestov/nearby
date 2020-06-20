@@ -78,8 +78,8 @@ public class FriendsFragment extends Fragment {
                 map.clear();
                 //put all the users in the map, used to see if the added friend is a registered user id
                 for(DataSnapshot dataSnapshotUser : dataSnapshot.getChildren()){
-                    //map.put(dataSnapshotUser.getKey(), dataSnapshotUser.child("nickname").getValue().toString());
-                    //map.put(dataSnapshotUser.child("nickname").getValue().toString(), dataSnapshotUser.getKey());
+                    map.put(dataSnapshotUser.getKey(), dataSnapshotUser.child("nickname").getValue().toString());
+                    map.put(dataSnapshotUser.child("nickname").getValue().toString(), dataSnapshotUser.getKey());
                     //if the current id is the logged user, it will go through all his friend list and add them to the listview
                     if(dataSnapshotUser.getKey().equals(user.getUid())){
                         for(DataSnapshot dataSnapshotFriends : dataSnapshotUser.child("friends").getChildren()){

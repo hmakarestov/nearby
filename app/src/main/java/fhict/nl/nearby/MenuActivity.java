@@ -118,10 +118,12 @@ public class MenuActivity extends AppCompatActivity {
                 }
                 FirebaseAuth.getInstance().signOut();
                 finish();
+                return false;
 
             case R.id.action_settings:
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
+                return false;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -132,9 +134,4 @@ public class MenuActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
-//    @Override
-//    public void onMapReady(GoogleMap googleMap) {
-//        gm=googleMap;
-//        gm.addMarker(new MarkerOptions().position(new LatLng(51.44083,5.47778)));
-//    }
 }

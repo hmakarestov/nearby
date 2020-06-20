@@ -80,7 +80,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     MarkerOptions multiplemarkers = new MarkerOptions();
     static String currentUserId;
     static Fragment newFragment;
-    //public static Boolean logOff = false;
     public static FragmentManager fm;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -99,13 +98,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         LocationManager locationManager = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             requestPermissions(
                             new String[] {Manifest.permission.ACCESS_FINE_LOCATION },
                             10);
@@ -113,7 +105,9 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         else{
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
             userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
-            userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+            if(userLocation != null){
+                userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+            }
         }
 
 
@@ -241,7 +235,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             allUsersDatabase.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
+                    if (gm!=null)
+                    {
+                        gm.clear(); //clear the markers on the map, new ones will be inserted
+                    }
                     //get info about all the users individually
                     for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
                         if(dataSnapshotUsers.getKey().equals(user.getUid())){
@@ -263,20 +260,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                             multiplemarkers.title(dataSnapshotInfoUser.child("nickname").getValue().toString());
                                             gm.addMarker(multiplemarkers);
                                         }
-                                        /*
-                                        //set the logged value to true/false
-                                        if(dataSnapshotInfoUser.getKey().equals(currentUserId)){
-                                            DatabaseReference user = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId).child("logged");
-
-                                            Log.d("Change","Location changed");
-                                            if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && logOff){
-                                                user.setValue(false);
-                                            }
-                                            else if(!logOff){
-                                                user.setValue(true);
-                                            }
-                                        }
-                                        */
                                     }
                                 }
                             }
