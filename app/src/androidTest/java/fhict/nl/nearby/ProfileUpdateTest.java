@@ -18,6 +18,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Random;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
@@ -82,8 +84,12 @@ public class ProfileUpdateTest {
             e.printStackTrace();
         }
 
+        Random r = new Random();
+        int i1 = r.nextInt(20);
+        String name = "Profile" + i1;
+
         ViewInteraction appCompatEditText3 = onView(withId(R.id.etProfileName));
-        appCompatEditText3.perform(replaceText("Profile1"));
+        appCompatEditText3.perform(replaceText(name));
 
         ViewInteraction appCompatEditText4 = onView(withId(R.id.etProfileName));
         appCompatEditText4.perform(closeSoftKeyboard());
@@ -103,14 +109,14 @@ public class ProfileUpdateTest {
         appCompatImageButton2.perform(click());
 
         ViewInteraction textView = onView(
-                allOf(withId(R.id.tvNavName), withText("Profile1"),
+                allOf(withId(R.id.tvNavName),
                         childAtPosition(
                                 childAtPosition(
                                         withId(R.id.navigation_header_container),
                                         0),
                                 1),
                         isDisplayed()));
-        textView.check(matches(withText("Profile1")));
+        textView.check(matches(withText(name)));
     }
 
     private static Matcher<View> childAtPosition(
