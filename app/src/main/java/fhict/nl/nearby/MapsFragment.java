@@ -238,7 +238,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                             for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
                                 for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
                                     if(dataSnapshotInfoUser.getKey().equals(dataSnapshotFriends.getKey()) || dataSnapshotInfoUser.getKey().equals(user.getUid())){
-                                        if((Boolean)dataSnapshotInfoUser.child("logged").getValue()){
+                                        if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && (Boolean)dataSnapshotInfoUser.child("showLocation").getValue()){
                                             lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
                                             lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
                                             locationCoordonates = new LatLng(lat, lng);

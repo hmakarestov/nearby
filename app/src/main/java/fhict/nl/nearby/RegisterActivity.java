@@ -160,6 +160,7 @@ class MyUser extends HashMap {
     public double lat;
     public double lng;
     public boolean logged;
+    public boolean showLocation;
     public HashMap<String, String> friends;
     public String image;
 
@@ -170,6 +171,7 @@ class MyUser extends HashMap {
         this.lat = lat;
         this.lng = lng;
         this.logged = true;
+        this.showLocation = true;
         this.friends = friends;
         this.image = image;
     }
