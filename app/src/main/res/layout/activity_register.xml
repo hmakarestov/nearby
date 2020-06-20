@@ -7,6 +7,20 @@
     android:background="@drawable/blurred_map"
     tools:context=".RegisterActivity">
 
+    <Button
+        android:id="@+id/btnRegisterEmail"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/login_rounded_button"
+        android:text="Register"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivRegisterPic" />
+
     <EditText
         android:id="@+id/editTextRegisterNickname"
         android:layout_width="0dp"
@@ -103,17 +117,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextRegisterPassword" />
 
-    <Button
-        android:id="@+id/btnRegisterEmail"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
+    <ImageView
+        android:id="@+id/ivRegisterPic"
+        android:layout_width="76dp"
+        android:layout_height="76dp"
+        android:layout_marginStart="64dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="32dp"
-        android:text="Register"
-        android:background="@drawable/login_rounded_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:adjustViewBounds="true"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextRegisterRepeatPassword"
+        app:srcCompat="@drawable/default_user" />
+
+    <Button
+        android:id="@+id/btnRegisterImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:text="Change Picture"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ivRegisterPic"
         app:layout_constraintTop_toBottomOf="@+id/editTextRegisterRepeatPassword" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
