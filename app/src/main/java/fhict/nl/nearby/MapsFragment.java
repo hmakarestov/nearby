@@ -1,6 +1,7 @@
 package fhict.nl.nearby;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,6 +13,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.service.autofill.Dataset;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.common.internal.Constants;
@@ -48,13 +51,20 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener, GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener {
     private static final int RC_SIGN_IN = 123;
+    private static View statview;
+
+    static MapMarker currentMarker = null;
+    static String key = null;
 
     View view;
     SupportMapFragment mapFragment;
@@ -66,11 +76,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     LatLng locationCoordonates;
     Marker meetingPoint = null;
     boolean centered = true;
-
     TextView textViewName;
     MarkerOptions multiplemarkers = new MarkerOptions();
     static String currentUserId;
+    static Fragment newFragment;
     public static Boolean logOff = false;
+    public static FragmentManager fm;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -101,10 +112,11 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         }
         else{
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
+            userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
+            userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
         }
 
-        userLocation = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
-        userLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
+
         //called to see if any user is logged in
         checkCurrentUser();
         Button centerBtn = view.findViewById(R.id.recenter);
@@ -120,7 +132,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         });
 
 
-
+        statview = view;
         return view;
     }
 
@@ -158,6 +170,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 }
             }
         });
+        fm = getFragmentManager();
         gm.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
@@ -166,13 +179,13 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 {
                     centered = false;
                     gm.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
-                    Fragment newFragment = new MeetPointMenuFragment();
+                    newFragment = new MeetPointMenuFragment();
                     FrameLayout markerFrame = view.findViewById(R.id.MarkerFrame);
                     markerFrame.setVisibility(View.VISIBLE);
 
 
                     // consider using Java coding conventions (upper first char class names!!!)
-                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    FragmentTransaction transaction = fm.beginTransaction();
 
                     // Replace whatever is in the fragment_container view with this fragment,
                     // and add the transaction to the back stack
@@ -218,13 +231,17 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             //user is logged
             textViewName.setText("LOGGED IN " +user.getEmail());
             currentUserId = user.getUid();
+            if (gm!=null)
+            {
+                gm.clear(); //clear the markers on the map, new ones will be inserted
+            }
 
             //update the location of all users who are logged in
             DatabaseReference allUsersDatabase = FirebaseDatabase.getInstance().getReference().child("users");
             allUsersDatabase.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    gm.clear(); //clear the markers on the map, new ones will be inserted
+
                     //get info about all the users individually
                     for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
                         if(dataSnapshotUsers.getKey().equals(user.getUid())){
@@ -269,6 +286,58 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) { }
             });
+
+            DatabaseReference allMarkers = FirebaseDatabase.getInstance().getReference().child("markers");
+            allMarkers.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()){
+                        if (dataSnapshotMarker.child("User").getValue().equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))
+                        {
+                            LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
+                            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
+                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                            currentMarker = new MapMarker(latLng, FirebaseAuth.getInstance().getCurrentUser().getUid());
+                            Log.d("marker added", "asdasd");
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+            DatabaseReference friendMarkers = allMarkers;
+            friendMarkers.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()) {
+                        for (DataSnapshot friend : dataSnapshotMarker.child("Friends").getChildren()) {
+
+                            Log.d("friend marker", friend.getValue().toString());
+
+                            if (friend.getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+
+                                LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
+                                gm.addMarker(new MarkerOptions().position(latLng).title(dataSnapshotMarker.child("Title").getValue().toString())
+                                        .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+
+
+
+
         }
     }
 
@@ -276,20 +345,33 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     //if you hold on the pin you can drag it to a different location
     @Override
     public void onMapLongClick(LatLng latLng) {
-        Log.d(TAG, "onMapLongClick: " + latLng.toString());
         if(meetingPoint==null)
         {
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+            Log.d("meeting null", "asda");
+
         }
         else
         {
 //            Toast.makeText(this.getContext(),"You already have a marker",
-            meetingPoint.remove();
+            currentMarker.RemoveMarker();
             meetingPoint = null;
+            gm.clear();
             meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
                     .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+            Log.d("meeting not null", "das");
+
         }
+
+
+        LatLng coordinates = meetingPoint.getPosition();
+        DatabaseReference marker_db = FirebaseDatabase.getInstance().getReference().child("markers");
+        MapMarker newMarker = new MapMarker(coordinates, FirebaseAuth.getInstance().getCurrentUser().getUid());
+        currentMarker = newMarker;
+        key = marker_db.push().getKey();
+        marker_db.child(key).setValue(newMarker);// updateChildren(friendsMap);
+        checkCurrentUser();
     }
 
     @Override
@@ -297,6 +379,94 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         if(meetingPoint==null)
         {
 
+        }
+    }
+
+    public static void KillFragment()
+    {
+        // consider using Java coding conventions (upper first char class names!!!)
+        FragmentTransaction transaction = fm.beginTransaction();
+
+        // Replace whatever is in the fragment_container view with this fragment,
+        // and add the transaction to the back stack
+        //transaction.remove(newFragment);
+        transaction.hide(newFragment);
+
+        FrameLayout frameLayout = statview.findViewById(R.id.MarkerFrame);
+        frameLayout.setVisibility(statview.INVISIBLE);
+
+        transaction.addToBackStack(null);
+
+        // Commit the transaction
+        transaction.commit();
+    }
+    public  static MapMarker getCurrentMarker()
+    {
+        return currentMarker;
+    }
+
+    public  class MapMarker{
+        public double Latitude, Longitude;
+        public String User;
+        public Map<String,Object> friends;
+        public String title;
+
+        public void ChangeTitle(String title)
+        {
+            this.title = title;
+        }
+
+        public MapMarker(LatLng coordinates, String user)
+        {
+            Latitude = coordinates.latitude;
+            Longitude = coordinates.longitude;
+            User = user;
+            friends = new HashMap<String, Object>();
+        }
+
+        public void AddFriend(String user)
+        {
+            friends.put("friend",user);
+        }
+
+        public void UpdateMarkerInDb()
+        {
+            final DatabaseReference markers = FirebaseDatabase.getInstance().getReference().child("markers");
+            markers.child(key).child("Friends").setValue(friends);
+            markers.child(key).child("Title").setValue(title);
+        }
+
+        public void  RemoveMarker()
+        {
+            if (key!=null)
+            {
+                Log.d("remove marker", key.toString());
+                DatabaseReference markerToBeDeleted = FirebaseDatabase.getInstance().getReference().child("markers").child(key);
+                markerToBeDeleted.removeValue();
+                meetingPoint.remove();
+            }
+            else
+            {
+                final DatabaseReference markers = FirebaseDatabase.getInstance().getReference().child("markers");
+                markers.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot markerInstance: dataSnapshot.getChildren()) {
+                            if (markerInstance.child("User").getValue().equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))
+                            {
+                                key = markerInstance.getKey();
+                                markers.child(markerInstance.getKey()).removeValue();
+                                break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+            }
         }
     }
 

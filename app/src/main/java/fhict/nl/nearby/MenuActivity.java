@@ -80,8 +80,15 @@ public class MenuActivity extends AppCompatActivity {
                     tvName.setText(user.nickname);
 
                     //Image Loading
-                    StorageReference imageReference = FirebaseStorage.getInstance().getReference().child(user.image);
-                    Glide.with(getApplicationContext()).load(imageReference).into(ivPic);
+                    try {
+                        StorageReference imageReference = FirebaseStorage.getInstance().getReference().child(user.image);
+                        Glide.with(getApplicationContext()).load(imageReference).into(ivPic);
+                    }
+                    catch (Exception x)
+                    {
+
+                    }
+
                 }
 
                 @Override

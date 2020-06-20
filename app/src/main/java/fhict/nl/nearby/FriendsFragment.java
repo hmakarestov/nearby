@@ -71,9 +71,9 @@ public class FriendsFragment extends Fragment {
         //get all users id
         DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users");
 
-        user_db.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                user_db.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 adapter.clear();
                 //put all the users in the map, used to see if the added friend is a registered user id
                 for(DataSnapshot dataSnapshotUser : dataSnapshot.getChildren()){
