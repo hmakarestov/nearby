@@ -64,7 +64,6 @@ public class MeetPointMenuFragment extends Fragment {
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference user_db = FirebaseDatabase.getInstance().getReference().child("users");
 
-
         user_db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -117,7 +116,6 @@ public class MeetPointMenuFragment extends Fragment {
                                 index++;
                             }
                             if (dataSnapshotMarker.child("nickname").getValue().toString() == nickname && !friends_share.contains(id)) {
-                                Log.d("Friend added", dataSnapshotMarker.getKey());
                                 friends_share.add(dataSnapshotMarker.getKey());
                             }
                         }

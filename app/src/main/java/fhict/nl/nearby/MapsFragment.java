@@ -81,7 +81,6 @@ import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class MapsFragment extends Fragment implements OnMapReadyCallback, LocationListener, GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMapClickListener {
-    private static final int RC_SIGN_IN = 123;
     private static View statview;
     private GeofencingClient geofencingClient;
     private GeofenceHelper geofenceHelper;
@@ -96,12 +95,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     View view;
     SupportMapFragment mapFragment;
     GoogleMap gm;
-    MarkerOptions markerOptions;
 
     Location userLocation;
     LatLng userLatLng;
-    LatLng locationCoordonates;
-    Marker meetingPoint = null;
+    HashMap<String, Marker> meetingPoints = new HashMap<>();
     boolean centered = true;
     TextView textViewName;
     MarkerOptions multiplemarkers = new MarkerOptions();
@@ -139,14 +136,11 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             }
         }
 
-
         //called to see if any user is logged in
         checkCurrentUser();
 
-
         statview = view;
         return view;
-
     }
 
     //called the first time when the map loads | when you open the app
@@ -160,7 +154,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         gm.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(Marker marker) {
-
             }
 
             @Override
@@ -170,7 +163,6 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
 
             @Override
             public void onMarkerDragEnd(Marker marker) {
-
             }
         });
         gm.setOnMapLongClickListener(this);
@@ -188,8 +180,14 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             @Override
             public boolean onMarkerClick(Marker marker) {
 
-                if (marker.equals(meetingPoint))
+                if (meetingPoints.containsValue(marker))
                 {
+                    currentMarker = new MapMarker(marker.getPosition(), FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    for (Map.Entry<String, Marker> entry : meetingPoints.entrySet()) {
+                        if(entry.getValue().equals(marker)){
+                            key = entry.getKey();
+                        }
+                    }
                     centered = false;
                     gm.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
                     newFragment = new MeetPointMenuFragment();
@@ -251,34 +249,26 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             }
 
             //update the location of all users who are logged in
-            DatabaseReference allUsersDatabase = FirebaseDatabase.getInstance().getReference().child("users");
-            allUsersDatabase.addValueEventListener(new ValueEventListener() {
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+            ref.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     if (gm!=null)
                     {
                         gm.clear(); //clear the markers on the map, new ones will be inserted
                     }
-                    //get info about all the users individually
-                    for(DataSnapshot dataSnapshotUsers : dataSnapshot.getChildren()){
-                        if(dataSnapshotUsers.getKey().equals(user.getUid())){
-                            /*
-                            double lat = Double.valueOf(dataSnapshotUsers.child("lat").getValue().toString());
-                            double lng = Double.valueOf(dataSnapshotUsers.child("lng").getValue().toString());
-                            locationCoordonates = new LatLng(lat, lng);
-                            multiplemarkers.position(locationCoordonates);
-                            multiplemarkers.title(dataSnapshotUsers.child("nickname").getValue().toString());
-                            multiplemarkers.draggable(false);
-                            gm.addMarker(multiplemarkers);
-                            */
-                            for(DataSnapshot dataSnapshotFriends : dataSnapshotUsers.child("friends").getChildren()){
-                                for(DataSnapshot dataSnapshotInfoUser : dataSnapshot.getChildren()){
-                                    if(dataSnapshotInfoUser.getKey().equals(dataSnapshotFriends.getKey()) || dataSnapshotInfoUser.getKey().equals(user.getUid())){
-                                        if((Boolean)dataSnapshotInfoUser.child("logged").getValue() && (Boolean)dataSnapshotInfoUser.child("showLocation").getValue()){
-                                            Double lat = Double.valueOf(dataSnapshotInfoUser.child("lat").getValue().toString());
-                                            Double lng = Double.valueOf(dataSnapshotInfoUser.child("lng").getValue().toString());
-                                            final String tmpName = dataSnapshotInfoUser.child("nickname").getValue().toString();
-                                            String url = dataSnapshotInfoUser.child("image").getValue().toString();
+
+                    DataSnapshot usersDB = dataSnapshot.child("users");
+                    for (DataSnapshot dataSnapShotUser : usersDB.getChildren()) {
+                        if(dataSnapShotUser.getKey().equals(user.getUid())){
+                            for (DataSnapshot usersFriends : dataSnapShotUser.child("friends").getChildren()) {
+                                for (DataSnapshot dataSnapShotInfoUser : usersDB.getChildren()) {
+                                    if(dataSnapShotInfoUser.getKey().equals(usersFriends.getKey()) || dataSnapShotInfoUser.getKey().equals(user.getUid())){
+                                        if((Boolean)dataSnapShotInfoUser.child("logged").getValue() && (Boolean)dataSnapShotInfoUser.child("showLocation").getValue()){
+                                            Double lat = Double.valueOf(dataSnapShotInfoUser.child("lat").getValue().toString());
+                                            Double lng = Double.valueOf(dataSnapShotInfoUser.child("lng").getValue().toString());
+                                            final String tmpName = dataSnapShotInfoUser.child("nickname").getValue().toString();
+                                            String url = dataSnapShotInfoUser.child("image").getValue().toString();
 
                                             final LatLng tmpLatlng = new LatLng(lat, lng);
                                             Task<Uri> uriTask = FirebaseStorage.getInstance().getReference().child(url).getDownloadUrl();
@@ -294,60 +284,33 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                                                     }
                                                 }
                                             });
-
-                                            /*
-                                            locationCoordonates = new LatLng(lat, lng);
-                                            multiplemarkers.position(locationCoordonates);
-                                            multiplemarkers.title(dataSnapshotInfoUser.child("nickname").getValue().toString());
-                                            gm.addMarker(multiplemarkers);
-                                            */
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) { }
-            });
 
-            DatabaseReference allMarkers = FirebaseDatabase.getInstance().getReference().child("markers");
-            allMarkers.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    for(DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()){
-                        if (dataSnapshotMarker.child("User").getValue().equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))
-                        {
-                            LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
-                            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-                            currentMarker = new MapMarker(latLng, FirebaseAuth.getInstance().getCurrentUser().getUid());
-                            Log.d("marker added", "asdasd");
+                    DataSnapshot markersDB = dataSnapshot.child("markers");
+                    meetingPoints = new HashMap<>();
+                    for (DataSnapshot markerSnapShot : markersDB.getChildren()) {
+                        LatLng latLng = new LatLng(Double.parseDouble(markerSnapShot.child("Latitude").getValue().toString()), Double.parseDouble(markerSnapShot.child("Longitude").getValue().toString()));
+                        String title = "Meeting Point";
+                        Object titleObject = markerSnapShot.child("Title").getValue();
+                        if(titleObject != null){
+                            if(!((String)titleObject).isEmpty()){
+                                title = (String)titleObject;
+                            }
                         }
-                    }
-                }
+                        if(markerSnapShot.child("User").getValue().equals(user.getUid())){
+                            meetingPoints.put(markerSnapShot.getKey(), gm.addMarker(new MarkerOptions().position(latLng).title(title)
+                                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))));
+                        }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-
-            DatabaseReference friendMarkers = allMarkers;
-            friendMarkers.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    for(DataSnapshot dataSnapshotMarker : dataSnapshot.getChildren()) {
-                        for (DataSnapshot friend : dataSnapshotMarker.child("Friends").getChildren()) {
-
-                            Log.d("friend marker", friend.getValue().toString());
-
+                        for(DataSnapshot friend : markerSnapShot.child("Friends").getChildren()){
                             if (friend.getValue().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
-
-                                LatLng latLng = new LatLng(Double.parseDouble(dataSnapshotMarker.child("Latitude").getValue().toString()), Double.parseDouble(dataSnapshotMarker.child("Longitude").getValue().toString()));
-                                gm.addMarker(new MarkerOptions().position(latLng).title(dataSnapshotMarker.child("Title").getValue().toString())
-                                        .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+                                gm.addMarker(new MarkerOptions().position(latLng).title(title)
+                                        .draggable(false).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
                                 addCircle(latLng, GEOFENCE_RADIUS);
                                 addGeofence(latLng, GEOFENCE_RADIUS);
                             }
@@ -356,61 +319,27 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
+                public void onCancelled(@NonNull DatabaseError databaseError) {}
             });
-
-
-
-
-
         }
     }
 
     //create a pin when you hold on a point on the map
-    //if you hold on the pin you can drag it to a different location
     @Override
     public void onMapLongClick(LatLng latLng) {
-        if(meetingPoint==null)
-        {
-            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-            addCircle(latLng, GEOFENCE_RADIUS);
-            addGeofence(latLng, GEOFENCE_RADIUS);
-            Log.d("meeting null", "asda");
+        gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
+                .draggable(false).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+        addCircle(latLng, GEOFENCE_RADIUS);
+        addGeofence(latLng, GEOFENCE_RADIUS);
 
-        }
-        else
-        {
-//            Toast.makeText(this.getContext(),"You already have a marker",
-            currentMarker.RemoveMarker();
-            meetingPoint = null;
-            gm.clear();
-            meetingPoint = gm.addMarker(new MarkerOptions().position(latLng).title("Meeting point")
-                    .draggable(true).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
-            addCircle(latLng, GEOFENCE_RADIUS);
-            addGeofence(latLng, GEOFENCE_RADIUS);
-            Log.d("meeting not null", "das");
-
-        }
-
-
-        LatLng coordinates = meetingPoint.getPosition();
         DatabaseReference marker_db = FirebaseDatabase.getInstance().getReference().child("markers");
-        MapMarker newMarker = new MapMarker(coordinates, FirebaseAuth.getInstance().getCurrentUser().getUid());
-        currentMarker = newMarker;
+        MapMarker newMarker = new MapMarker(latLng, FirebaseAuth.getInstance().getCurrentUser().getUid());
         key = marker_db.push().getKey();
-        marker_db.child(key).setValue(newMarker);// updateChildren(friendsMap);
-        checkCurrentUser();
+        marker_db.child(key).setValue(newMarker);
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
-        if(meetingPoint==null)
-        {
-
-        }
     }
 
     public static void KillFragment()
@@ -471,32 +400,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
         {
             if (key!=null)
             {
-                Log.d("remove marker", key.toString());
                 DatabaseReference markerToBeDeleted = FirebaseDatabase.getInstance().getReference().child("markers").child(key);
                 markerToBeDeleted.removeValue();
-                meetingPoint.remove();
-            }
-            else
-            {
-                final DatabaseReference markers = FirebaseDatabase.getInstance().getReference().child("markers");
-                markers.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        for (DataSnapshot markerInstance: dataSnapshot.getChildren()) {
-                            if (markerInstance.child("User").getValue().equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))
-                            {
-                                key = markerInstance.getKey();
-                                markers.child(markerInstance.getKey()).removeValue();
-                                break;
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                });
+                currentMarker = null;
+                key = null;
             }
         }
     }
@@ -558,14 +465,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Log.d(TAG, "onSuccess: GeofenceAdded...");
             }
         })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         String errorMessage = geofenceHelper.getErrorString(e);
-                        Log.d(TAG, "onFailure: " + errorMessage);
                     }
                 });
     }
@@ -593,6 +498,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
             super.onPostExecute(taskParam);
             multiplemarkers.position(taskParam.latLng);
             multiplemarkers.title(taskParam.name);
+            multiplemarkers.draggable(false);
             if(taskParam.bmp != null){
                 multiplemarkers.icon(BitmapDescriptorFactory.fromBitmap(taskParam.bmp));
             }
