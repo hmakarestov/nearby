@@ -69,6 +69,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -220,12 +222,20 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback, Locati
     public void onLocationChanged(Location location) {
         //update the location to the database
         DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserId);
-        userDatabase.child("lat").setValue(location.getLatitude());
-        userDatabase.child("lng").setValue(location.getLongitude());
+        userDatabase.child("lat").setValue(round(location.getLatitude(), 4));
+        userDatabase.child("lng").setValue(round(location.getLongitude(), 4));
         if (centered == true) {
             userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
             gm.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
         }
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 
     //NOT USED, part of the LocationListener interface
