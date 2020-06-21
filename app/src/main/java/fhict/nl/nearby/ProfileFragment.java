@@ -211,14 +211,12 @@ public class ProfileFragment extends Fragment {
                                             Toast.makeText(getActivity(), "Unknown Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         }
                                     }
-                                    Log.v("ProfileUpdate", task.getException().getMessage() + e);
                                 }
                             }
                         });
                     }else{
                         Exception e = task.getException();
                         Toast.makeText(getActivity(), "Unknown Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        Log.v("Profile-AUTH", task.getException().getMessage());
                     }
                 }
             });
@@ -271,14 +269,12 @@ public class ProfileFragment extends Fragment {
                             }else{
                                 Exception e = task.getException();
                                 Toast.makeText(getActivity(), "Unknown Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                Log.v("PasswordUpdate", task.getException().getMessage());
                             }
                         }
                     });
                 }else{
                     Exception e = task.getException();
                     Toast.makeText(getActivity(), "Unknown Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.v("Password-AUTH", task.getException().getMessage());
                 }
             }
         });

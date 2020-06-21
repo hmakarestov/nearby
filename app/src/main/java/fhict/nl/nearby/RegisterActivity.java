@@ -169,7 +169,6 @@ public class RegisterActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
                     //signup and sign in success
-                    Log.i("EmailRegister", "Success");
                     SharedPreferences pref = getApplicationContext().getSharedPreferences("myinfo", MODE_PRIVATE);
                     SharedPreferences.Editor editor = pref.edit();
                     editor.putString("password", etPassword.getText().toString().trim());
@@ -203,10 +202,8 @@ public class RegisterActivity extends AppCompatActivity {
                 }else{
                     Exception e = task.getException();
                     if(e instanceof FirebaseAuthUserCollisionException){
-                        Log.e("EmailRegister", e.getMessage());
                         etEmail.setError("Email already in use by an account");
                     } else {
-                        Log.e("EmailRegister", e.getMessage());
                         Toast.makeText(RegisterActivity.this, "Unknown error occurred. Try again later", Toast.LENGTH_LONG).show();
                     }
                 }

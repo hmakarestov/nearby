@@ -109,18 +109,20 @@ public class FriendsFragment extends Fragment {
         friends_db.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                requestList = new ArrayList<>();
-                for(DataSnapshot dataSnapshotFriends : dataSnapshot.getChildren()){
-                    if(dataSnapshotFriends.getKey().equals(user.getUid())){
-                        for(DataSnapshot dataSnapshot1 : dataSnapshotFriends.getChildren()){
-                            requestList.add(dataSnapshot1.getKey());
+                if(getContext() != null){
+                    requestList = new ArrayList<>();
+                    for(DataSnapshot dataSnapshotFriends : dataSnapshot.getChildren()){
+                        if(dataSnapshotFriends.getKey().equals(user.getUid())){
+                            for(DataSnapshot dataSnapshot1 : dataSnapshotFriends.getChildren()){
+                                requestList.add(dataSnapshot1.getKey());
+                            }
                         }
                     }
+                    //creating the adapter
+                    FriendListAdapter adapter = new FriendListAdapter(getActivity().getApplicationContext(), R.layout.friend_request_list, requestList);
+                    //attaching adapter to the listview
+                    listView.setAdapter(adapter);
                 }
-                //creating the adapter
-                FriendListAdapter adapter = new FriendListAdapter(getContext(), R.layout.friend_request_list, requestList);
-                //attaching adapter to the listview
-                listView.setAdapter(adapter);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) { }
